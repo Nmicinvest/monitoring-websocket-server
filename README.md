@@ -1454,52 +1454,139 @@ monitoring-websocket-system-server/
 ### Architecture Diagram
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│                 │     │                  │     │                 │
-│  WebSocket      │◄────│  Monitoring      │◄────│   System        │
-│  Clients        │     │  Service         │     │   Monitors      │
-│                 │     │                  │     │                 │
-└─────────────────┘     └──────┬───────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌──────────────────┐
-                        │                  │
-                        │  Alert Manager   │
-                        │                  │
-                        └──────┬───────────┘
-                               │
-                ┌──────────────┴──────────────┐
-                ▼                             ▼
-         ┌──────────────┐             ┌─────────────────────┐
-         │              │             │                     │
-         │  Exporters   │             │      Handlers       │
-         │  (JSON/WS)   │             │  (Console/File/     │
-         │              │             │   Email/Webhook/    │
-         └──────────────┘             │      Slack)         │
-                                       └─────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              MONITORING WEBSOCKET SERVER                               │
+│                                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                                    DATA COLLECTION LAYER                         │  │
+│  │                                                                                  │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │  │
+│  │  │   CPU/Core  │  │   Memory    │  │    Disk     │  │     GPU     │              │  │
+│  │  │   Monitor   │  │   Monitor   │  │   Monitor   │  │   Monitor   │              │  │
+│  │  │             │  │             │  │             │  │             │              │  │
+│  │  │ • Usage %   │  │ • Total     │  │ • Total     │  │ • Usage %   │              │  │
+│  │  │ • Frequency │  │ • Used      │  │ • Free      │  │ • Memory    │              │  │
+│  │  │ • Cores     │  │ • Available │  │ • Used %    │  │ • Temp °C   │              │  │
+│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘              │  │
+│  │         │                │                │                │                     │  │
+│  │         └────────────────┴────────────────┴────────────────┘                     │  │
+│  │                                      │                                           │  │
+│  │                                      ▼                                           │  │
+│  │                            ┌───────────────────┐                                 │  │
+│  │                            │   System Monitor  │                                 │  │
+│  │                            │   (Aggregator)    │                                 │  │
+│  │                            └───────────┬───────┘                                 │  │
+│  └────────────────────────────────────────┴─────────────────────────────────────────┘  │
+│                                           │                                            │
+│  ┌────────────────────────────────────────┴─────────────────────────────────────────┐  │
+│  │                                 PROCESSING & ANALYSIS LAYER                      │  │
+│  │                                                                                  │  │
+│  │    ┌─────────────────────┐         ┌──────────────────────┐                      │  │
+│  │    │  Realtime Service   │         │   Alert Manager      │                      │  │
+│  │    │                     │         │                      │                      │  │
+│  │    │ • Data Collection   │◄────────┤ • Threshold Check    │                      │  │
+│  │    │ • History (1000)    │         │ • Alert Generation   │                      │  │
+│  │    │ • Thread Pool       │         │ • Cooldown (5min)    │                      │  │
+│  │    │ • Export Scheduling │         │ • Handler Dispatch   │                      │  │
+│  │    └──────────┬──────────┘         └──────────┬───────────┘                      │  │
+│  │               │                               │                                  │  │
+│  │               │                   ┌───────────┴────────────┐                     │  │
+│  │               │                   ▼                        ▼                     │  │
+│  │               │         ┌─────────────────┐      ┌──────────────────┐            │  │
+│  │               │         │ Console Handler │      │  File Handler    │            │  │
+│  │               │         │ (Color Output)  │      │ (Log Rotation)   │            │  │
+│  │               │         └─────────────────┘      └──────────────────┘            │  │
+│  │               │                                                                  │  │
+│  │               │         ┌─────────────────┐      ┌──────────────────┐            │  │
+│  │               │         │ Email Handler   │      │ Webhook Handler  │            │  │
+│  │               │         │ (SMTP)          │      │ (HTTP/HTTPS)     │            │  │ 
+│  │               │         └─────────────────┘      └──────────────────┘            │  │
+│  │               │                                                                  │  │
+│  │               │                      ┌──────────────────┐                        │  │
+│  │               │                      │  Slack Handler   │                        │  │
+│  │               │                      │ (Webhook API)    │                        │  │
+│  │               │                      └──────────────────┘                        │  │
+│  └───────────────┴──────────────────────────────────────────────────────────────────┘  │
+│                  │                                                                     │
+│  ┌───────────────┴──────────────────────────────────────────────────────────────────┐  │
+│  │                               DATA DISTRIBUTION LAYER                            │  │
+│  │                                                                                  │  │
+│  │    ┌─────────────────────┐                    ┌───────────────────────┐          │  │
+│  │    │   JSON Exporter     │                    │  WebSocket Server     │          │  │
+│  │    │                     │                    │                       │          │  │
+│  │    │ • File Rotation     │                    │ • Port 8765           │          │  │
+│  │    │ • Compression       │                    │ • Max 1000 clients    │          │  │
+│  │    │ • Timestamping      │                    │ • Broadcast (50/sec)  │          │  │
+│  │    └─────────────────────┘                    │ • Control Commands    │          │  │
+│  │                                               └───────────┬───────────┘          │  │
+│  └───────────────────────────────────────────────────────────┴──────────────────────┘  │
+│                                                              │                         │
+│                                                              ▼                         │
+│                                              ┌─────────────────────────────┐           │
+│                                              │   WebSocket Clients         │           │
+│                                              │                             │           │
+│                                              │ • Real-time monitoring      │           │
+│                                              │ • Alert notifications       │           │
+│                                              │ • Control messages          │           │
+│                                              └─────────────────────────────┘           │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
-1. **Collection**: Monitors collect system metrics
-   - Parallel collection via ThreadPoolExecutor
-   - Automatic history cleanup (1-hour TTL)
-   - Thread naming with "monitoring-" prefix
+#### 1. **Data Collection Layer** 🔍
+- **Individual Monitors**: Each system component has a dedicated monitor
+  - CPU Monitor: Tracks usage percentage, frequency, and core counts
+  - Memory Monitor: Monitors total, used, and available memory
+  - Disk Monitor: Tracks disk space usage and availability
+  - GPU Monitor: Monitors GPU usage, memory, and temperature (if available)
+  
+- **System Monitor Aggregation**: Combines all monitor data into unified snapshots
+  - Parallel collection using ThreadPoolExecutor (4 workers by default)
+  - Non-blocking operations to prevent delays
+  - Automatic error handling and graceful degradation
 
-2. **Aggregation**: Service aggregates data into snapshots
-   - Race condition protection
-   - Automatic counter overflow management
-   - Limits: 10M alerts, 1M errors
+#### 2. **Processing & Analysis Layer** 🔧
+- **Realtime Service**: Central orchestrator for data processing
+  - Maintains history of last 1000 snapshots
+  - Automatic cleanup of old data (1-hour TTL)
+  - Thread-safe operations with "monitoring-" prefix naming
+  - Export scheduling at configurable intervals
 
-3. **Distribution**: 
-   - Export to JSON files (with rotation)
-   - WebSocket broadcast (limited)
-   - Alert triggering (with cooldown)
-   
-4. **Consumption**: Clients receive real-time data
-   - Structured JSON format
-   - Typed error messages
-   - Automatic disconnection handling
+- **Alert Manager**: Real-time threshold monitoring
+  - Configurable thresholds for each metric
+  - Alert generation with WARNING and CRITICAL levels
+  - 5-minute cooldown to prevent spam
+  - Dispatches alerts to multiple handlers simultaneously
+
+- **Alert Handlers**: Specialized alert processing
+  - Console: Color-coded output (Yellow/Red)
+  - File: Log rotation at 10MB
+  - Email: SMTP with TLS support
+  - Webhook: HTTP/HTTPS endpoints
+  - Slack: Native integration with emojis
+
+#### 3. **Data Distribution Layer** 📤
+- **JSON Exporter**: Persistent data storage
+  - Automatic file rotation with timestamps
+  - Optional gzip compression
+  - Pretty-print formatting available
+  - Date-based file naming (monitoring_YYYYMMDD.json)
+
+- **WebSocket Server**: Real-time data streaming
+  - Listens on port 8765 by default
+  - Supports up to 1000 concurrent clients
+  - Broadcast rate limited to 50 messages/second
+  - Semaphore-based concurrency control
+  - Control command support (ping/pong, status, subscribe)
+
+#### 4. **Client Consumption** 📊
+- **WebSocket Clients**: Real-time data consumers
+  - Receive structured JSON messages
+  - Integrated alert notifications
+  - Control message support
+  - Automatic reconnection handling (client-side)
+  - Multi-platform support (JavaScript, Python, etc.)
 
 ### Design Patterns
 
@@ -1509,6 +1596,50 @@ monitoring-websocket-system-server/
 - **Strategy Pattern**: Different export strategies (JSON, WebSocket)
 - **Template Method**: Abstract base classes (base.py in monitors and exporters)
 - **Handler Pattern**: Modular alert management (ConsoleHandler, FileHandler, EmailHandler, WebhookHandler, SlackHandler)
+
+### Key Architecture Components
+
+#### Monitors (Data Collection)
+Each monitor inherits from `BaseMonitor` and implements the `collect()` method:
+
+```python
+monitors/
+├── base.py          # Abstract base class defining the monitor interface
+├── processor.py     # CPU monitoring with frequency detection
+├── memory.py        # RAM monitoring
+├── disk.py          # Disk space monitoring
+├── gpu.py           # GPU monitoring with multi-backend support
+└── system.py        # Aggregates all monitors into a unified collector
+```
+
+#### Services (Core Logic)
+The service layer orchestrates monitoring and data distribution:
+
+```python
+services/
+├── realtime.py      # Main monitoring service with history and export scheduling
+├── threadsafe.py    # Thread-safe wrapper for multi-threaded applications
+└── websocket_server.py  # WebSocket server for real-time broadcasting
+```
+
+#### Exporters (Data Output)
+Exporters handle different output formats and destinations:
+
+```python
+exporters/
+├── base.py          # Abstract base class for exporters
+├── json_exporter.py # File-based JSON export with rotation
+└── websocket_exporter.py  # Real-time WebSocket broadcasting
+```
+
+#### Alerts (Notification System)
+Comprehensive alert system with multiple notification channels:
+
+```python
+alerts/
+├── manager.py       # Alert threshold management and dispatching
+└── handlers.py      # Various notification handlers (Console, File, Email, etc.)
+```
 
 ### New Components
 

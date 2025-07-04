@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: monitoring-websocket-server
-Version: 1.0.83.78
+Version: 1.0.83.79
 Summary: Real-Time WebSocket Monitoring System
 Author-email: NMicInvest <accueil@nmicinvest.com>
 License-Expression: GPL-3.0-or-later
@@ -1483,53 +1483,136 @@ monitoring-websocket-system-server/
 
 ### Architecture Diagram
 
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│                 │     │                  │     │                 │
-│  WebSocket      │◄────│  Monitoring      │◄────│   System        │
-│  Clients        │     │  Service         │     │   Monitors      │
-│                 │     │                  │     │                 │
-└─────────────────┘     └──────┬───────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌──────────────────┐
-                        │                  │
-                        │  Alert Manager   │
-                        │                  │
-                        └──────┬───────────┘
-                               │
-                ┌──────────────┴──────────────┐
-                ▼                             ▼
-         ┌──────────────┐             ┌─────────────────────┐
-         │              │             │                     │
-         │  Exporters   │             │      Handlers       │
-         │  (JSON/WS)   │             │  (Console/File/     │
-         │              │             │   Email/Webhook/    │
-         └──────────────┘             │      Slack)         │
-                                       └─────────────────────┘
+```mermaid
+graph TB
+    subgraph "Data Collection Layer"
+        PM[ProcessorMonitor<br/>CPU usage & frequency]
+        MM[MemoryMonitor<br/>RAM usage]
+        DM[DiskMonitor<br/>Storage usage]
+        GM[GPUMonitor<br/>GPU metrics]
+        OM[OSMonitor<br/>System info]
+        
+        SM[SystemMonitor<br/>Aggregator]
+        
+        PM --> SM
+        MM --> SM
+        DM --> SM
+        GM --> SM
+        OM --> SM
+    end
+    
+    subgraph "Processing Layer"
+        RMS[RealtimeMonitoringService<br/>• ThreadPoolExecutor<br/>• History management<br/>• Export scheduling]
+        AM[AlertManager<br/>• Threshold checking<br/>• Alert generation<br/>• Cooldown control]
+        
+        SM --> RMS
+        RMS --> AM
+    end
+    
+    subgraph "Alert Handlers"
+        CH[ConsoleHandler]
+        FH[FileHandler]
+        EH[EmailHandler]
+        WH[WebhookHandler]
+        SH[SlackHandler]
+        
+        AM --> CH
+        AM --> FH
+        AM --> EH
+        AM --> WH
+        AM --> SH
+    end
+    
+    subgraph "Data Export Layer"
+        JE[JSONExporter<br/>File storage]
+        WSE[WebSocketExporter<br/>Real-time broadcast]
+        
+        RMS --> JE
+        RMS --> WSE
+    end
+    
+    subgraph "Distribution"
+        WSS[WebSocketMonitoringServer<br/>Port 8765]
+        WSE --> WSS
+    end
+    
+    subgraph "Clients"
+        WC[WebSocket Clients<br/>JavaScript/Python/etc]
+        WSS --> WC
+    end
+    
+    subgraph "Standalone Mode"
+        SWS[StandaloneWebSocketServer<br/>All-in-one server]
+        SWS -.-> WC
+    end
+    
+    style PM fill:#e1f5fe
+    style MM fill:#e1f5fe
+    style DM fill:#e1f5fe
+    style GM fill:#e1f5fe
+    style OM fill:#e1f5fe
+    style SM fill:#81d4fa
+    style RMS fill:#fff3e0
+    style AM fill:#ffccbc
+    style WSS fill:#c8e6c9
+    style SWS fill:#d1c4e9
 ```
 
 ### Data Flow
 
-1. **Collection**: Monitors collect system metrics
-   - Parallel collection via ThreadPoolExecutor
-   - Automatic history cleanup (1-hour TTL)
-   - Thread naming with "monitoring-" prefix
+#### 1. **Data Collection Layer** 🔍
+- **Individual Monitors**: Each system component has a dedicated monitor
+  - CPU Monitor: Tracks usage percentage, frequency, and core counts
+  - Memory Monitor: Monitors total, used, and available memory
+  - Disk Monitor: Tracks disk space usage and availability
+  - GPU Monitor: Monitors GPU usage, memory, and temperature (if available)
+  
+- **System Monitor Aggregation**: Combines all monitor data into unified snapshots
+  - Parallel collection using ThreadPoolExecutor (4 workers by default)
+  - Non-blocking operations to prevent delays
+  - Automatic error handling and graceful degradation
 
-2. **Aggregation**: Service aggregates data into snapshots
-   - Race condition protection
-   - Automatic counter overflow management
-   - Limits: 10M alerts, 1M errors
+#### 2. **Processing & Analysis Layer** 🔧
+- **Realtime Service**: Central orchestrator for data processing
+  - Maintains history of last 1000 snapshots
+  - Automatic cleanup of old data (1-hour TTL)
+  - Thread-safe operations with "monitoring-" prefix naming
+  - Export scheduling at configurable intervals
 
-3. **Distribution**: 
-   - Export to JSON files (with rotation)
-   - WebSocket broadcast (limited)
-   - Alert triggering (with cooldown)
-   
-4. **Consumption**: Clients receive real-time data
-   - Structured JSON format
-   - Typed error messages
-   - Automatic disconnection handling
+- **Alert Manager**: Real-time threshold monitoring
+  - Configurable thresholds for each metric
+  - Alert generation with WARNING and CRITICAL levels
+  - 5-minute cooldown to prevent spam
+  - Dispatches alerts to multiple handlers simultaneously
+
+- **Alert Handlers**: Specialized alert processing
+  - Console: Color-coded output (Yellow/Red)
+  - File: Log rotation at 10MB
+  - Email: SMTP with TLS support
+  - Webhook: HTTP/HTTPS endpoints
+  - Slack: Native integration with emojis
+
+#### 3. **Data Distribution Layer** 📤
+- **JSON Exporter**: Persistent data storage
+  - Automatic file rotation with timestamps
+  - Optional gzip compression
+  - Pretty-print formatting available
+  - Date-based file naming (monitoring_YYYYMMDD.json)
+
+- **WebSocket Server**: Real-time data streaming
+  - Listens on port 8765 by default
+  - Supports up to 1000 concurrent clients
+  - Broadcast rate limited to 50 messages/second
+  - Semaphore-based concurrency control
+  - Control command support (ping/pong, status, subscribe)
+
+#### 4. **Client Consumption** 📊
+- **WebSocket Clients**: Real-time data consumers
+  - Receive structured JSON messages
+  - Integrated alert notifications
+  - Control message support
+  - Automatic reconnection handling (client-side)
+  - Multi-platform support (JavaScript, Python, etc.)
 
 ### Design Patterns
 
@@ -1539,6 +1622,50 @@ monitoring-websocket-system-server/
 - **Strategy Pattern**: Different export strategies (JSON, WebSocket)
 - **Template Method**: Abstract base classes (base.py in monitors and exporters)
 - **Handler Pattern**: Modular alert management (ConsoleHandler, FileHandler, EmailHandler, WebhookHandler, SlackHandler)
+
+### Key Architecture Components
+
+#### Monitors (Data Collection)
+Each monitor inherits from `BaseMonitor` and implements the `collect()` method:
+
+```python
+monitors/
+├── base.py          # Abstract base class defining the monitor interface
+├── processor.py     # CPU monitoring with frequency detection
+├── memory.py        # RAM monitoring
+├── disk.py          # Disk space monitoring
+├── gpu.py           # GPU monitoring with multi-backend support
+└── system.py        # Aggregates all monitors into a unified collector
+```
+
+#### Services (Core Logic)
+The service layer orchestrates monitoring and data distribution:
+
+```python
+services/
+├── realtime.py      # Main monitoring service with history and export scheduling
+├── threadsafe.py    # Thread-safe wrapper for multi-threaded applications
+└── websocket_server.py  # WebSocket server for real-time broadcasting
+```
+
+#### Exporters (Data Output)
+Exporters handle different output formats and destinations:
+
+```python
+exporters/
+├── base.py          # Abstract base class for exporters
+├── json_exporter.py # File-based JSON export with rotation
+└── websocket_exporter.py  # Real-time WebSocket broadcasting
+```
+
+#### Alerts (Notification System)
+Comprehensive alert system with multiple notification channels:
+
+```python
+alerts/
+├── manager.py       # Alert threshold management and dispatching
+└── handlers.py      # Various notification handlers (Console, File, Email, etc.)
+```
 
 ### New Components
 
