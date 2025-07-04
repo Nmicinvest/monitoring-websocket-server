@@ -1,6 +1,8 @@
+CLAUDE.md
 LICENSE
 MANIFEST.in
 README.md
+README_FR.md
 config.py
 pyproject.toml
 requirements.txt
