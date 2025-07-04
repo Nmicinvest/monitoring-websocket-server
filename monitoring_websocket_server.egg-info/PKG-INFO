@@ -1,9 +1,12 @@
 Metadata-Version: 2.4
 Name: monitoring-websocket-server
-Version: 1.0.83.76
+Version: 1.0.83.77
 Summary: Serveur WebSocket pour monitoring système en temps réel
 Author-email: NMicInvest <accueil@nmicinvest.com>
 License-Expression: GPL-3.0-or-later
+Project-URL: Homepage, https://github.com/Nmicinvest/monitoring-websocket-server/
+Project-URL: Repository, https://github.com/Nmicinvest/monitoring-websocket-server/
+Project-URL: Bug Tracker, https://github.com/Nmicinvest/monitoring-websocket-server/issues
 Classifier: Development Status :: 5 - Production/Stable
 Classifier: Intended Audience :: Developers
 Classifier: Topic :: System :: Monitoring
@@ -15,6 +18,7 @@ Classifier: Programming Language :: Python :: 3.11
 Classifier: Programming Language :: Python :: 3.12
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Requires-Dist: websockets
 Requires-Dist: psutil
 Requires-Dist: pyyaml
@@ -22,6 +26,7 @@ Requires-Dist: colorama
 Requires-Dist: GPUtil
 Requires-Dist: nvidia-ml-py3
 Requires-Dist: pynvml
+Dynamic: license-file
 
 # Real-Time WebSocket Monitoring System
 
