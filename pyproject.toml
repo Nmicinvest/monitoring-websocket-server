@@ -23,6 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/Nmicinvest/monitoring-websocket-server/"
+"Repository" = "https://github.com/Nmicinvest/monitoring-websocket-server/"
+"Bug Tracker" = "https://github.com/Nmicinvest/monitoring-websocket-server/issues"
 dependencies = [
     "websockets", "psutil", "pyyaml", "colorama", "GPUtil", "nvidia-ml-py3", "pynvml"
 ]
