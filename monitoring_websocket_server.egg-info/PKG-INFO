@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: monitoring-websocket-server
-Version: 1.0.83.77
-Summary: Serveur WebSocket pour monitoring système en temps réel
+Version: 1.0.83.78
+Summary: Real-Time WebSocket Monitoring System
 Author-email: NMicInvest <accueil@nmicinvest.com>
 License-Expression: GPL-3.0-or-later
 Project-URL: Homepage, https://github.com/Nmicinvest/monitoring-websocket-server/
