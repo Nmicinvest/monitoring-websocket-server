@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: monitoring-websocket-server
-Version: 1.0.83.79
+Version: 1.0.83.80
 Summary: Real-Time WebSocket Monitoring System
 Author-email: NMicInvest <accueil@nmicinvest.com>
 License-Expression: GPL-3.0-or-later
@@ -1483,79 +1483,83 @@ monitoring-websocket-system-server/
 
 ### Architecture Diagram
 
-```mermaid
-graph TB
-    subgraph "Data Collection Layer"
-        PM[ProcessorMonitor<br/>CPU usage & frequency]
-        MM[MemoryMonitor<br/>RAM usage]
-        DM[DiskMonitor<br/>Storage usage]
-        GM[GPUMonitor<br/>GPU metrics]
-        OM[OSMonitor<br/>System info]
-        
-        SM[SystemMonitor<br/>Aggregator]
-        
-        PM --> SM
-        MM --> SM
-        DM --> SM
-        GM --> SM
-        OM --> SM
-    end
-    
-    subgraph "Processing Layer"
-        RMS[RealtimeMonitoringService<br/>• ThreadPoolExecutor<br/>• History management<br/>• Export scheduling]
-        AM[AlertManager<br/>• Threshold checking<br/>• Alert generation<br/>• Cooldown control]
-        
-        SM --> RMS
-        RMS --> AM
-    end
-    
-    subgraph "Alert Handlers"
-        CH[ConsoleHandler]
-        FH[FileHandler]
-        EH[EmailHandler]
-        WH[WebhookHandler]
-        SH[SlackHandler]
-        
-        AM --> CH
-        AM --> FH
-        AM --> EH
-        AM --> WH
-        AM --> SH
-    end
-    
-    subgraph "Data Export Layer"
-        JE[JSONExporter<br/>File storage]
-        WSE[WebSocketExporter<br/>Real-time broadcast]
-        
-        RMS --> JE
-        RMS --> WSE
-    end
-    
-    subgraph "Distribution"
-        WSS[WebSocketMonitoringServer<br/>Port 8765]
-        WSE --> WSS
-    end
-    
-    subgraph "Clients"
-        WC[WebSocket Clients<br/>JavaScript/Python/etc]
-        WSS --> WC
-    end
-    
-    subgraph "Standalone Mode"
-        SWS[StandaloneWebSocketServer<br/>All-in-one server]
-        SWS -.-> WC
-    end
-    
-    style PM fill:#e1f5fe
-    style MM fill:#e1f5fe
-    style DM fill:#e1f5fe
-    style GM fill:#e1f5fe
-    style OM fill:#e1f5fe
-    style SM fill:#81d4fa
-    style RMS fill:#fff3e0
-    style AM fill:#ffccbc
-    style WSS fill:#c8e6c9
-    style SWS fill:#d1c4e9
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              MONITORING WEBSOCKET SERVER                               │
+│                                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                                    DATA COLLECTION LAYER                         │  │
+│  │                                                                                  │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │  │
+│  │  │   CPU/Core  │  │   Memory    │  │    Disk     │  │     GPU     │              │  │
+│  │  │   Monitor   │  │   Monitor   │  │   Monitor   │  │   Monitor   │              │  │
+│  │  │             │  │             │  │             │  │             │              │  │
+│  │  │ • Usage %   │  │ • Total     │  │ • Total     │  │ • Usage %   │              │  │
+│  │  │ • Frequency │  │ • Used      │  │ • Free      │  │ • Memory    │              │  │
+│  │  │ • Cores     │  │ • Available │  │ • Used %    │  │ • Temp °C   │              │  │
+│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘              │  │
+│  │         │                │                │                │                     │  │
+│  │         └────────────────┴────────────────┴────────────────┘                     │  │
+│  │                                      │                                           │  │
+│  │                                      ▼                                           │  │
+│  │                            ┌───────────────────┐                                 │  │
+│  │                            │   System Monitor  │                                 │  │
+│  │                            │   (Aggregator)    │                                 │  │
+│  │                            └───────────┬───────┘                                 │  │
+│  └────────────────────────────────────────┴─────────────────────────────────────────┘  │
+│                                           │                                            │
+│  ┌────────────────────────────────────────┴─────────────────────────────────────────┐  │
+│  │                                 PROCESSING & ANALYSIS LAYER                      │  │
+│  │                                                                                  │  │
+│  │    ┌─────────────────────┐         ┌──────────────────────┐                      │  │
+│  │    │  Realtime Service   │         │   Alert Manager      │                      │  │
+│  │    │                     │         │                      │                      │  │
+│  │    │ • Data Collection   │◄────────┤ • Threshold Check    │                      │  │
+│  │    │ • History (1000)    │         │ • Alert Generation   │                      │  │
+│  │    │ • Thread Pool       │         │ • Cooldown (5min)    │                      │  │
+│  │    │ • Export Scheduling │         │ • Handler Dispatch   │                      │  │
+│  │    └──────────┬──────────┘         └──────────┬───────────┘                      │  │
+│  │               │                               │                                  │  │
+│  │               │                   ┌───────────┴────────────┐                     │  │
+│  │               │                   ▼                        ▼                     │  │
+│  │               │         ┌─────────────────┐      ┌──────────────────┐            │  │
+│  │               │         │ Console Handler │      │  File Handler    │            │  │
+│  │               │         │ (Color Output)  │      │ (Log Rotation)   │            │  │
+│  │               │         └─────────────────┘      └──────────────────┘            │  │
+│  │               │                                                                  │  │
+│  │               │         ┌─────────────────┐      ┌──────────────────┐            │  │
+│  │               │         │ Email Handler   │      │ Webhook Handler  │            │  │
+│  │               │         │ (SMTP)          │      │ (HTTP/HTTPS)     │            │  │ 
+│  │               │         └─────────────────┘      └──────────────────┘            │  │
+│  │               │                                                                  │  │
+│  │               │                      ┌──────────────────┐                        │  │
+│  │               │                      │  Slack Handler   │                        │  │
+│  │               │                      │ (Webhook API)    │                        │  │
+│  │               │                      └──────────────────┘                        │  │
+│  └───────────────┴──────────────────────────────────────────────────────────────────┘  │
+│                  │                                                                     │
+│  ┌───────────────┴──────────────────────────────────────────────────────────────────┐  │
+│  │                               DATA DISTRIBUTION LAYER                            │  │
+│  │                                                                                  │  │
+│  │    ┌─────────────────────┐                    ┌───────────────────────┐          │  │
+│  │    │   JSON Exporter     │                    │  WebSocket Server     │          │  │
+│  │    │                     │                    │                       │          │  │
+│  │    │ • File Rotation     │                    │ • Port 8765           │          │  │
+│  │    │ • Compression       │                    │ • Max 1000 clients    │          │  │
+│  │    │ • Timestamping      │                    │ • Broadcast (50/sec)  │          │  │
+│  │    └─────────────────────┘                    │ • Control Commands    │          │  │
+│  │                                               └───────────┬───────────┘          │  │
+│  └───────────────────────────────────────────────────────────┴──────────────────────┘  │
+│                                                              │                         │
+│                                                              ▼                         │
+│                                              ┌─────────────────────────────┐           │
+│                                              │   WebSocket Clients         │           │
+│                                              │                             │           │
+│                                              │ • Real-time monitoring      │           │
+│                                              │ • Alert notifications       │           │
+│                                              │ • Control messages          │           │
+│                                              └─────────────────────────────┘           │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow

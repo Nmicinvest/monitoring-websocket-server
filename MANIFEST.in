@@ -5,4 +5,5 @@ recursive-include monitors *.py
 recursive-include services *.py
 recursive-include utils *.py
 include *.py
+include *.md
 include requirements.txt
