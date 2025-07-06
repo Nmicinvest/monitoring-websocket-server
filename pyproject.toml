@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "monitoring-websocket-server"
-version = "1.0.83.82"
+version = "1.0.83.83"
 description = "Real-Time WebSocket Monitoring System"
 readme = "README.md"
 requires-python = ">=3.8"
