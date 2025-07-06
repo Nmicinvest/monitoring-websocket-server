@@ -4,13 +4,14 @@ MANIFEST.in
 README.md
 README_FR.md
 __init__.py
-config.py
 pyproject.toml
 requirements.txt
 run_server.py
 alerts/__init__.py
 alerts/handlers.py
 alerts/manager.py
+config/__init__.py
+config/config.py
 core/__init__.py
 core/enums.py
 core/exceptions.py
