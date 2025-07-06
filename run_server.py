@@ -27,8 +27,35 @@ import socket
 import argparse
 from typing import Dict, Any, Set, List
 
-# Solution : utiliser psutil directement pour les fréquences CPU
-# et implémenter une version simplifiée des fonctions avancées localement
+try:
+    # Import standard quand installé comme package
+    from config import (
+        WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_MAX_CLIENTS,
+        WEBSOCKET_CLOSE_CODE_CAPACITY, WEBSOCKET_SEND_TIMEOUT,
+        MONITORING_COLLECTION_INTERVAL, CPU_PERCENT_INTERVAL,
+        DEFAULT_DISK_PATH,
+        MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
+        DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD
+    )
+except ImportError:
+    # Si l'import échoue, c'est qu'on est dans un contexte non standard
+    raise ImportError(
+        "Impossible d'importer config. "
+        "Installez le package avec 'pip install -e .' pour le développement "
+        "ou 'pip install .' pour l'installation normale."
+    )
+
+# Pour les GPU
+try:
+    import GPUtil
+except ImportError:
+    GPUtil = None
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 def get_cpu_max_frequency() -> float:
     """Récupère la fréquence maximale du CPU en MHz."""
@@ -83,40 +110,6 @@ def get_cpu_current_frequency() -> float:
             pass
     
     return 0.0
-
-
-try:
-    # Try relative import first (when installed as a package)
-    from .config import (
-        WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_MAX_CLIENTS,
-        WEBSOCKET_CLOSE_CODE_CAPACITY, WEBSOCKET_SEND_TIMEOUT,
-        MONITORING_COLLECTION_INTERVAL, CPU_PERCENT_INTERVAL,
-        DEFAULT_DISK_PATH,
-        MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
-        DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD
-    )
-except ImportError:
-    # Fallback to absolute import (when running directly)
-    from config import (
-        WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_MAX_CLIENTS,
-        WEBSOCKET_CLOSE_CODE_CAPACITY, WEBSOCKET_SEND_TIMEOUT,
-        MONITORING_COLLECTION_INTERVAL, CPU_PERCENT_INTERVAL,
-        DEFAULT_DISK_PATH,
-        MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
-        DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD
-    )
-
-# Pour les GPU
-try:
-    import GPUtil
-except ImportError:
-    GPUtil = None
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 
 class StandaloneWebSocketServer:

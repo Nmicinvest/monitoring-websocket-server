@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "monitoring-websocket-server"
-version = "1.0.83.83"
+version = "1.0.83.85"
 description = "Real-Time WebSocket Monitoring System"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -37,7 +37,7 @@ monitoring-websocket-server = "run_server:main"
 
 [tool.setuptools]
 packages = ["alerts", "core", "exporters", "monitors", "services", "utils"]
-py-modules = ["__init__", "config", "run_server"]
+py-modules = ["config", "run_server"]
 include-package-data = true
 
 [tool.setuptools.package-data]

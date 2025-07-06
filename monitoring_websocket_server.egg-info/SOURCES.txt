@@ -3,6 +3,7 @@ LICENSE
 MANIFEST.in
 README.md
 README_FR.md
+__init__.py
 config.py
 pyproject.toml
 requirements.txt
