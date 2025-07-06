@@ -9,7 +9,7 @@ from collections import deque
 from datetime import datetime
 from typing import Dict, List, Deque, Optional, Callable, Any
 
-from ..config import (
+from ..config.config import (
     ALERT_HISTORY_SIZE, ALERT_COOLDOWN, ALERT_CLEANUP_INTERVAL,
     MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
     DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD,

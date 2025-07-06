@@ -8,7 +8,7 @@ from typing import Optional
 
 import psutil
 
-from ..config import MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD
+from ..config.config import MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD
 from .base import BaseMonitor
 from ..core.models import MemoryInfo
 

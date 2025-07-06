@@ -10,7 +10,7 @@ from typing import List, Optional, Dict, Any
 
 import websockets
 
-from ..config import WEBSOCKET_HOST, WEBSOCKET_PORT
+from ..config.config import WEBSOCKET_HOST, WEBSOCKET_PORT
 from ..core.models import MonitoringSnapshot
 from ..services.websocket_server import WebSocketMonitoringServer
 

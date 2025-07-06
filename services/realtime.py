@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, Deque, List
 
-from ..config import (
+from ..config.config import (
     MONITOR_INTERVAL, EXPORT_INTERVAL, MAX_SNAPSHOTS_HISTORY,
     THREAD_POOL_WORKERS, DEFAULT_EXPORT_DIR,
     MAX_ERROR_COUNT,

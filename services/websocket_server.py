@@ -15,7 +15,7 @@ try:
 except ImportError:
     psutil = None
 
-from ..config import (
+from ..config.config import (
     WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_MAX_CLIENTS,
     WEBSOCKET_SEND_TIMEOUT,
     WEBSOCKET_BROADCAST_SEMAPHORE_LIMIT

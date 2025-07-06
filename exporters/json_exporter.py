@@ -12,7 +12,7 @@ from dataclasses import asdict
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-from ..config import (
+from ..config.config import (
     EXPORT_COMPRESS_DEFAULT, EXPORT_PRETTY_PRINT_DEFAULT,
     EXPORT_DATE_IN_FILENAME_DEFAULT
 )

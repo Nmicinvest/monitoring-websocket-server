@@ -27,23 +27,14 @@ import socket
 import argparse
 from typing import Dict, Any, Set, List
 
-try:
-    # Import standard quand installé comme package
-    from config import (
-        WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_MAX_CLIENTS,
-        WEBSOCKET_CLOSE_CODE_CAPACITY, WEBSOCKET_SEND_TIMEOUT,
-        MONITORING_COLLECTION_INTERVAL, CPU_PERCENT_INTERVAL,
-        DEFAULT_DISK_PATH,
-        MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
-        DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD
-    )
-except ImportError:
-    # Si l'import échoue, c'est qu'on est dans un contexte non standard
-    raise ImportError(
-        "Impossible d'importer config. "
-        "Installez le package avec 'pip install -e .' pour le développement "
-        "ou 'pip install .' pour l'installation normale."
-    )
+from config import (
+    WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_MAX_CLIENTS,
+    WEBSOCKET_CLOSE_CODE_CAPACITY, WEBSOCKET_SEND_TIMEOUT,
+    MONITORING_COLLECTION_INTERVAL, CPU_PERCENT_INTERVAL,
+    DEFAULT_DISK_PATH,
+    MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
+    DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD
+)
 
 # Pour les GPU
 try:

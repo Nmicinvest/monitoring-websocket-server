@@ -8,7 +8,7 @@ import logging
 from typing import Dict, Any, Type, Union, List
 from pathlib import Path
 
-from ..config import DEFAULT_EXPORT_DIR
+from ..config.config import DEFAULT_EXPORT_DIR
 from .base import BaseExporter
 from .json_exporter import JSONExporter
 from ..core.exceptions import ExportError

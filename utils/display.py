@@ -8,7 +8,7 @@ import sys
 from typing import Dict, Any, List
 
 from ..core.models import Alert
-from ..config import (
+from ..config.config import (
     MEMORY_WARNING_THRESHOLD, MEMORY_CRITICAL_THRESHOLD,
     DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD
 )

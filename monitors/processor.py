@@ -13,7 +13,7 @@ from typing import Optional, List, Tuple, Dict, Any
 
 import psutil
 
-from ..config import (
+from ..config.config import (
     PROCESSOR_CHECK_INTERVAL, PROCESSOR_FALLBACK_INTERVAL
 )
 from .base import BaseMonitor

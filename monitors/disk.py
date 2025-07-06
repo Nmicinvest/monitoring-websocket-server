@@ -10,7 +10,7 @@ from pathlib import Path
 
 import psutil
 
-from ..config import (
+from ..config.config import (
     DEFAULT_DISK_PATH, DISK_WARNING_THRESHOLD, DISK_CRITICAL_THRESHOLD,
     DISK_MIN_FREE_GB, DISK_WARNING_FREE_GB, DISK_CRITICAL_FREE_GB
 )

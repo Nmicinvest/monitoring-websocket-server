@@ -10,7 +10,7 @@ import threading
 from collections import deque
 from typing import Any, Optional, Dict, List, Callable, Deque
 
-from ..config import (
+from ..config.config import (
     EXPORT_INTERVAL, DATA_QUEUE_SIZE,
     COMMAND_QUEUE_SIZE, RESPONSE_QUEUE_SIZE, LAST_ALERTS_DEQUE_SIZE,
     SERVICE_START_TIMEOUT, SERVICE_STOP_TIMEOUT,
